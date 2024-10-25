@@ -182,20 +182,13 @@ def send_message(h, message_id, msg, out_len):
         for i, x in enumerate(msg):
             data[2+i] = x
 
-    try:
-        # TODO: Do this somewhere outside
-        #h.set_nonblocking(0)
-        h.write(data)
+    h.write(data)
 
-        if out_len == 0:
-            return None
+    if out_len == 0:
+        return None
 
-        out_data = h.read(out_len+3)
-        return out_data
-    except (IOError, OSError) as ex:
-        dev['disconnected'] = True
-        debug_print("Error ({}): ".format(dev['path']), ex)
-        raise
+    out_data = h.read(out_len+3)
+    return out_data
 
 def set_keyboard_value(dev, value, number):
     msg = [value, number]
