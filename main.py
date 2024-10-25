@@ -39,7 +39,7 @@ def transition_backlight_to(dev, target: int, total_seconds: float = 1.0, step_s
     set_rgb_brightness(dev, target)
 
 def main():
-    devs = find_devs(False, False)
+    devs = find_devs()
     dev = open_device(devs[0])
 
     trg = int(argv[1])

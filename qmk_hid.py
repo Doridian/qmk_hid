@@ -5,10 +5,7 @@ import hid
 # - Get current values
 # - Set sliders to current values
 
-PROGRAM_VERSION = "0.1.12"
 FWK_VID = 0x32AC
-
-DEBUG_PRINT = False
 
 QMK_INTERFACE = 0x01
 RAW_HID_BUFFER_SIZE = 32
@@ -100,65 +97,22 @@ RGB_EFFECTS = [
     "SOLID_MULTISPLASH",
 ]
 
-def debug_print(*args):
-    if DEBUG_PRINT:
-        print(args)
-
-def format_fw_ver(fw_ver):
-    fw_ver_major = (fw_ver & 0xFF00) >> 8
-    fw_ver_minor = (fw_ver & 0x00F0) >> 4
-    fw_ver_patch = (fw_ver & 0x000F)
-    return f"{fw_ver_major}.{fw_ver_minor}.{fw_ver_patch}"
-
-def find_devs(show, verbose):
-    if verbose:
-        show = True
-
+def find_devs():
     devices = []
     for device_dict in hid.enumerate():
         vid = device_dict["vendor_id"]
         pid = device_dict["product_id"]
-        product = device_dict["product_string"]
-        manufacturer = device_dict["manufacturer_string"]
-        sn = device_dict['serial_number']
         interface = device_dict['interface_number']
-        path = device_dict['path']
 
         if vid != FWK_VID:
-            if verbose:
-                print("Vendor ID not matching")
             continue
 
         if interface != QMK_INTERFACE:
-            if verbose:
-                print("Interface not matching")
-            continue
-        # For some reason on Linux it'll always show usage_page==0
-        if os.name == 'nt' and device_dict['usage_page'] not in [RAW_USAGE_PAGE, CONSOLE_USAGE_PAGE]:
-            if verbose:
-                print("Usage Page not matching")
-            continue
-        # Lots of false positives, so at least skip Framework false positives
-        if vid == FWK_VID and pid not in [0x12, 0x13, 0x14, 0x18, 0x19]:
-            if verbose:
-                print("False positive, device is not allowed")
             continue
 
-        fw_ver = device_dict["release_number"]
-
-        if (os.name == 'nt' and device_dict['usage_page'] == RAW_USAGE_PAGE) or verbose:
-            if show:
-                print(f"Manufacturer: {manufacturer}")
-                print(f"Product:      {product}")
-                print("FW Version:   {}".format(format_fw_ver(fw_ver)))
-                print(f"Serial No:    {sn}")
-
-            if verbose:
-                print(f"Path:         {path}")
-                print(f"VID/PID:      {vid:02X}:{pid:02X}")
-                print(f"Interface:    {interface}")
-                # TODO: print Usage Page
-                print("")
+        # skip Framework false positives
+        if pid not in [0x12, 0x13, 0x14, 0x18, 0x19]:
+            continue
 
         devices.append(device_dict)
 
@@ -266,5 +220,7 @@ def set_rgb_color(dev, hue, saturation):
     (cur_hue, cur_sat) = get_rgb_color(dev)
     if hue is None:
         hue = cur_hue
+    if saturation is None:
+        saturation = cur_sat
     msg = [CHANNEL_RGB_MATRIX, RGB_MATRIX_VALUE_COLOR, hue, saturation]
     send_message(dev, CUSTOM_SET_VALUE, msg, 0)
